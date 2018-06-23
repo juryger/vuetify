@@ -1,32 +1,46 @@
-const touchstart = (event, wrapper) => {
-  const touch = event.changedTouches[0]
-  wrapper.touchstartX = touch.clientX
-  wrapper.touchstartY = touch.clientY
+import { VNodeDirective, VNode } from 'vue/types/vnode'
 
-  wrapper.start &&
-    wrapper.start(Object.assign(event, wrapper))
+interface TouchStoredHandlers {
+  touchstart: (e: TouchEvent) => void
+  touchend: (e: TouchEvent) => void
+  touchmove: (e: TouchEvent) => void
 }
 
-const touchend = (event, wrapper) => {
-  const touch = event.changedTouches[0]
-  wrapper.touchendX = touch.clientX
-  wrapper.touchendY = touch.clientY
-
-  wrapper.end &&
-    wrapper.end(Object.assign(event, wrapper))
-
-  handleGesture(wrapper)
+interface TouchHTMLElement extends HTMLElement {
+  _touchHandlers: {
+    [_uid: string]: TouchStoredHandlers
+  }
 }
 
-const touchmove = (event, wrapper) => {
-  const touch = event.changedTouches[0]
-  wrapper.touchmoveX = touch.clientX
-  wrapper.touchmoveY = touch.clientY
-
-  wrapper.move && wrapper.move(Object.assign(event, wrapper))
+interface TouchHandlers {
+  start?: (wrapperEvent: TouchEvent & TouchWrapper) => void
+  end?: (wrapperEvent: TouchEvent & TouchWrapper) => void
+  move?: (wrapperEvent: TouchEvent & TouchWrapper) => void
+  left?: (wrapper: TouchWrapper) => void
+  right?: (wrapper: TouchWrapper) => void
+  up?: (wrapper: TouchWrapper) => void
+  down?: (wrapper: TouchWrapper) => void
 }
 
-const handleGesture = wrapper => {
+interface TouchWrapper extends TouchHandlers {
+  touchstartX: number
+  touchstartY: number
+  touchmoveX: number
+  touchmoveY: number
+  touchendX: number
+  touchendY: number
+  offsetX: number
+  offsetY: number
+}
+
+interface TouchVNodeDirective extends VNodeDirective {
+  value: TouchHandlers & {
+    parent?: boolean
+    options?: AddEventListenerOptions
+  }
+}
+
+const handleGesture = (wrapper: TouchWrapper) => {
   const { touchstartX, touchendX, touchstartY, touchendY } = wrapper
   const dirRatio = 0.5
   const minDistance = 16
@@ -44,7 +58,35 @@ const handleGesture = wrapper => {
   }
 }
 
-function inserted (el, { value }, { context }) {
+function touchstart (event: TouchEvent, wrapper: TouchWrapper) {
+  const touch = event.changedTouches[0]
+  wrapper.touchstartX = touch.clientX
+  wrapper.touchstartY = touch.clientY
+
+  wrapper.start &&
+    wrapper.start(Object.assign(event, wrapper))
+}
+
+function touchend (event: TouchEvent, wrapper: TouchWrapper) {
+  const touch = event.changedTouches[0]
+  wrapper.touchendX = touch.clientX
+  wrapper.touchendY = touch.clientY
+
+  wrapper.end &&
+    wrapper.end(Object.assign(event, wrapper))
+
+  handleGesture(wrapper)
+}
+
+function touchmove (event: TouchEvent, wrapper: TouchWrapper) {
+  const touch = event.changedTouches[0]
+  wrapper.touchmoveX = touch.clientX
+  wrapper.touchmoveY = touch.clientY
+
+  wrapper.move && wrapper.move(Object.assign(event, wrapper))
+}
+
+function createHandlers (value: TouchHandlers): TouchStoredHandlers {
   const wrapper = {
     touchstartX: 0,
     touchstartY: 0,
@@ -63,35 +105,39 @@ function inserted (el, { value }, { context }) {
     end: value.end
   }
 
-  const target = value.parent ? el.parentNode : el
+  return {
+    touchstart: (e: TouchEvent) => touchstart(e, wrapper),
+    touchend: (e: TouchEvent) => touchend(e, wrapper),
+    touchmove: (e: TouchEvent) => touchmove(e, wrapper)
+  }
+}
+
+function inserted (el: TouchHTMLElement, binding: TouchVNodeDirective, vnode: VNode) {
+  const value = binding.value
+  const target = (value.parent ? el.parentNode : el) as TouchHTMLElement
   const options = value.options || { passive: true }
 
   // Needed to pass unit tests
   if (!target) return
 
-  const handlers = {
-    touchstart: e => touchstart(e, wrapper),
-    touchend: e => touchend(e, wrapper),
-    touchmove: e => touchmove(e, wrapper)
-  }
-  target._touchHandlers = Object.assign(Object(target._touchHandlers), {
-    [context._uid]: handlers
-  })
+  const handlers = createHandlers(binding.value)
+  target._touchHandlers = Object(target._touchHandlers)
+  target._touchHandlers[(vnode.context as any)._uid] = handlers
+
   for (const eventName of Object.keys(handlers)) {
-    target.addEventListener(eventName, handlers[eventName], options)
+    target.addEventListener(eventName, handlers[eventName as 'touchstart' | 'touchend' | 'touchmove'] as EventListener, options)
   }
 }
 
-function unbind (el, { value }, { context }) {
-  const target = value.parent ? el.parentNode : el
-
+function unbind (el: TouchHTMLElement, binding: TouchVNodeDirective, vnode: VNode) {
+  const target = (binding.value.parent ? el.parentNode : el) as TouchHTMLElement
   if (!target) return
 
-  const handlers = target._touchHandlers[context._uid]
+  const handlers = target._touchHandlers[(vnode.context as any)._uid]
   for (const eventName of Object.keys(handlers)) {
-    target.removeEventListener(eventName, handlers[eventName])
+    target.removeEventListener(eventName, handlers[eventName as 'touchstart' | 'touchend' | 'touchmove'] as EventListener)
   }
-  delete target._touchHandlers[context._uid]
+  delete target._touchHandlers[(vnode.context as any)._uid]
 }
 
 export default {
