@@ -41,7 +41,6 @@
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^8.2.3",
-    "babel-jest": "^23.0.1",
     "babel-loader": "^7.1.4",
     "babel-plugin-detective": "2.0.0",
     "babel-plugin-module-resolver": "3.1.1",
@@ -75,7 +74,6 @@
     "jest-cli": "^21.2.1",
     "jest-css-modules": "^1.1.0",
     "jest-serializer-html": "^5.0.0",
-    "jest-vue-preprocessor": "^1.4.0",
     "mini-css-extract-plugin": "^0.4.0",
     "optimize-css-assets-webpack-plugin": "^4.0.2",
     "postcss-loader": "^2.1.5",
@@ -122,8 +120,7 @@
     ],
     "moduleFileExtensions": [
       "ts",
-      "js",
-      "vue"
+      "js"
     ],
     "moduleDirectories": [
       "node_modules"
@@ -134,11 +131,13 @@
       "^@/(.*)$": "<rootDir>/src/$1"
     },
     "transform": {
-      ".*\\.(vue)$": "jest-vue-preprocessor",
       "\\.(styl)$": "jest-css-modules",
-      ".*\\.(vue|js)$": "babel-jest",
-      ".*\\.(ts)$": "ts-jest"
+      ".*\\.(j|t)s$": "ts-jest"
     },
+    "mapCoverage": true,
+    "collectCoverageFrom": [
+      "src/**/*.{js,ts,tsx}"
+    ],
     "transformIgnorePatterns": [
       "node_modules/(?!vue-router)"
     ],
