@@ -1,4 +1,5 @@
 import { VNodeDirective, VNode } from 'vue/types/vnode'
+import { keys } from '../util/helpers'
 
 interface TouchStoredHandlers {
   touchstart: (e: TouchEvent) => void
@@ -122,22 +123,22 @@ function inserted (el: TouchHTMLElement, binding: TouchVNodeDirective, vnode: VN
 
   const handlers = createHandlers(binding.value)
   target._touchHandlers = Object(target._touchHandlers)
-  target._touchHandlers[(vnode.context as any)._uid] = handlers
+  target._touchHandlers[vnode.context!._uid] = handlers
 
-  for (const eventName of Object.keys(handlers)) {
-    target.addEventListener(eventName, handlers[eventName as 'touchstart' | 'touchend' | 'touchmove'] as EventListener, options)
-  }
+  keys(handlers).forEach(eventName => {
+    target.addEventListener(eventName, handlers[eventName] as EventListener, options)
+  })
 }
 
 function unbind (el: TouchHTMLElement, binding: TouchVNodeDirective, vnode: VNode) {
   const target = (binding.value.parent ? el.parentNode : el) as TouchHTMLElement
   if (!target) return
 
-  const handlers = target._touchHandlers[(vnode.context as any)._uid]
-  for (const eventName of Object.keys(handlers)) {
-    target.removeEventListener(eventName, handlers[eventName as 'touchstart' | 'touchend' | 'touchmove'] as EventListener)
-  }
-  delete target._touchHandlers[(vnode.context as any)._uid]
+  const handlers = target._touchHandlers[vnode.context!._uid]
+  keys(handlers).forEach(eventName => {
+    target.removeEventListener(eventName, handlers[eventName] as EventListener)
+  })
+  delete target._touchHandlers[vnode.context!._uid]
 }
 
 export default {

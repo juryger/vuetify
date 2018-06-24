@@ -2,7 +2,7 @@ import { VNodeDirective } from 'vue/types/vnode'
 
 interface ClickOutsideBindingArgs {
   closeConditional?: (e: Event) => boolean
-  include?: () => Array<HTMLElement>
+  include?: () => HTMLElement[]
 }
 
 interface ClickOutsideDirective extends VNodeDirective {
@@ -56,7 +56,7 @@ function directive (e: PointerEvent, el: HTMLElement, binding: ClickOutsideDirec
   }, 0)
 }
 
-function clickedInEls (e: PointerEvent, elements: Array<HTMLElement>): boolean {
+function clickedInEls (e: PointerEvent, elements: HTMLElement[]): boolean {
   // Get position of click
   const { clientX: x, clientY: y } = e
   // Loop over all included elements to see if click was in any of them
