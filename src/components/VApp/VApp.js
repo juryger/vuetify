@@ -1,7 +1,6 @@
 import '../../stylus/components/_app.styl'
 
 // Component level mixins
-import AppTheme from './mixins/app-theme'
 import AppBreakpoint from './mixins/app-breakpoint'
 
 // Directives
@@ -11,8 +10,7 @@ export default {
   name: 'v-app',
 
   mixins: [
-    AppBreakpoint,
-    AppTheme
+    AppBreakpoint
   ],
 
   directives: {
