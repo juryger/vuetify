@@ -41,6 +41,7 @@ function remapInternalIcon (parent: object, iconName: string): string {
 
 const addTextColorClassChecks = Colorable.options.methods.addTextColorClassChecks
 
+/* @vue/component */
 export default mixins(Colorable, Themeable).extend({
   name: 'v-icon',
 
